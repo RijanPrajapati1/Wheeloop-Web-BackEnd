@@ -3,7 +3,6 @@ const jwt = require('jsonwebtoken');
 const nodemailer = require('nodemailer');
 const Cred = require("../model/cred");
 const SECRET_KEY = "8261ba19898d0dcdfe6c0c411df74b587b2e54538f5f451633b71e39f957cf01";
-
 // Register Controller
 const register = async (req, res) => {
     const { email, password, role, full_name, address, phone_number } = req.body;
@@ -34,35 +33,51 @@ const register = async (req, res) => {
     try {
         await cred.save();
 
-        // Send email verification
-        const verificationToken = jwt.sign({ email: cred.email }, SECRET_KEY, { expiresIn: '1h' });
-
+        // Send email notification
         const transporter = nodemailer.createTransport({
             host: "smtp.gmail.com",
             port: 587,
             secure: false,
             auth: {
-                user: "rijanpraz@gmail.com",
-                pass: "hnbyxbgpqqtrwkci"
+                user: "rijanpraz@gmail.com",  // Replace with your email
+                pass: "hnbyxbgpqqtrwkci"      // Replace with your email password
             }
         });
 
         const info = await transporter.sendMail({
             from: "rijanpraz@gmail.com",
             to: cred.email,
-            subject: "Verify Your Email Address",
+            subject: "Registration Successful",
             html: `
-                <h1>Verify your email address</h1>
-                <p>Click the link below to verify your email address:</p>
-                <a href="http://localhost:3001/api/cred/verify-email?token=${verificationToken}">Verify Email</a>
+                <h1>Registration Successful</h1>
+                <p>Dear ${cred.full_name},</p>
+                <p>Your account has been successfully created. Below are your details:</p>
+                <ul>
+                    <li>Email: ${cred.email}</li>
+                    <li>Full Name: ${cred.full_name}</li>
+                    <li>Address: ${cred.address}</li>
+                    <li>Phone Number: ${cred.phone_number}</li>
+                </ul>
+                <p>Thank you for registering with us!</p>
             `
         });
 
-        res.status(201).send({ user: cred, emailInfo: info });
+        // Send response with user info
+        res.status(201).send({
+            message: "You have successfully registered.",
+            user: {
+                full_name: cred.full_name,
+                address: cred.address,
+                phone_number: cred.phone_number,
+                email: cred.email
+            },
+            emailInfo: info
+        });
     } catch (e) {
         res.status(500).json(e);
     }
 };
+
 
 // Email Verification Controller
 const verifyEmail = async (req, res) => {
@@ -107,7 +122,7 @@ const login = async (req, res) => {
 
     const token = jwt.sign({ email: cred.email, role: cred.role },
         SECRET_KEY,
-        { expiresIn: '2h' });
+        { expiresIn: '24h' });
 
     res.json({ token });
 };
