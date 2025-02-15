@@ -14,11 +14,13 @@ const findAll = async (req, res) => {
 
 const save = async (req, res) => {
     try {
-        const { name, price, description } = req.body
+        const { name, type, price, description, transmission } = req.body
         const cars = new Car({
             name,
+            type,
             price,
             description,
+            transmission,
             image: req.file.originalname
         });
         await cars.save()

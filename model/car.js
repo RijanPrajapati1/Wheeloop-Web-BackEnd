@@ -5,11 +5,19 @@ const carSchema = new mongoose.Schema({
         type: String,
         required: true
     },
+    type: {
+        type: String,
+        required: true
+    },
     price: {
         type: String,
         required: true
     },
     description: {
+        type: String,
+        required: true
+    },
+    transmission: {
         type: String,
         required: true
     },

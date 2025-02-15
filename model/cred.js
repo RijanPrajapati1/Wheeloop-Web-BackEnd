@@ -27,10 +27,6 @@ const credSchema = new mongoose.Schema({
         type: String,
         required: true
     },
-    isVerified: {
-        type: Boolean,
-        default: false  // Initially set to false before email verification
-    },
     createdAt: {
         type: Date,
         default: Date.now

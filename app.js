@@ -3,11 +3,18 @@ const connectDb = require("./config/db");
 const user_route = require("./routes/user_route")
 const car_route = require("./routes/car_route")
 const rental_route = require("./routes/rental_route")
+const cors = require('cors');
 const cred_route = require("./routes/cred_route")
 
 const app = express();
 
 connectDb();
+app.use(cors({
+    origin: "http://localhost:5173", // Your frontend URL
+    methods: "GET,POST,PUT,DELETE",
+    allowedHeaders: "Content-Type, Authorization",
+    credentials: true
+}));
 
 app.use(express.json());
 

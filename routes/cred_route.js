@@ -59,7 +59,9 @@ const { authenticateToken, authorizeRole } = require("../security/auth");
 const UserValidation = require("../validation/user_validation");
 
 // Registration route with validation
-router.post("/register", UserValidation, register);
+router.post("/register",
+    // UserValidation, 
+    register);
 
 // Email Verification Route
 router.get("/verify-email", verifyEmail);
@@ -68,10 +70,17 @@ router.get("/verify-email", verifyEmail);
 router.post("/login", login);
 
 // CRUD operations for users
-router.get("/users", authenticateToken, authorizeRole("admin"), findAll);  // Get all users
-router.get("/users/:id", authenticateToken, authorizeRole("admin"), findById);  // Get user by ID
-router.put("/users/:id", authenticateToken, authorizeRole("admin"), update);  // Update user by ID
-router.delete("/users/:id", authenticateToken, authorizeRole("admin"), deleteById);  // Delete user by ID
+router.get("/users", findAll);  // Get all users
+router.get("/users/:id",
+    authenticateToken,
+    authorizeRole("admin"),
+    findById);  // Get user by ID
+router.put("/users/:id",
+    // authenticateToken, authorizeRole("admin"),
+    update);  // Update user by ID
+router.delete("/users/:id",
+    authenticateToken, authorizeRole("admin"),
+    deleteById);  // Delete user by ID
 
 // Admin-specific route
 router.get("/admin-data", authenticateToken, authorizeRole("admin"), (req, res) => {

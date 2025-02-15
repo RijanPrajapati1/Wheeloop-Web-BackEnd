@@ -19,7 +19,9 @@ const upload = multer({ storage })
 
 
 router.get("/", findAll)
-router.post("/", authenticateToken, authorizeRole("admin"), upload.single('file'), save)
+router.post("/",
+    //  authenticateToken, authorizeRole("admin"), 
+    upload.single('file'), save)
 router.get("/:id", authenticateToken, authorizeRole("admin"), findById)
 router.delete("/:id", authenticateToken, authorizeRole("admin"), deleteById)
 router.put("/:id", authenticateToken, authorizeRole("admin"), update)
