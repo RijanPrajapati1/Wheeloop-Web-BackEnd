@@ -79,6 +79,7 @@ const verifyEmail = async (req, res) => {
 };
 
 // Login Controller
+// Login Controller
 const login = async (req, res) => {
     console.log("Login request received", req.body);
     const { email, password } = req.body;
@@ -97,8 +98,15 @@ const login = async (req, res) => {
 
     const token = jwt.sign({ email: cred.email, role: cred.role }, SECRET_KEY, { expiresIn: '24h' });
     console.log("Login successful", email);
-    res.json({ token, role: cred.role });
+
+    // Send the token, role, and userId in the response
+    res.json({
+        token,
+        role: cred.role,
+        userId: cred._id  // Include the userId here
+    });
 };
+
 
 // Other CRUD operations with logs
 const findAll = async (req, res) => {

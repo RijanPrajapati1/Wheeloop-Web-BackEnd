@@ -72,8 +72,8 @@ router.post("/login", login);
 // CRUD operations for users
 router.get("/users", findAll);  // Get all users
 router.get("/users/:id",
-    authenticateToken,
-    authorizeRole("admin"),
+    // authenticateToken,
+    // authorizeRole("admin"),
     findById);  // Get user by ID
 router.put("/users/:id",
     // authenticateToken, authorizeRole("admin"),

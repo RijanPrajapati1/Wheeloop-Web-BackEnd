@@ -13,6 +13,30 @@ const findAll = async (req, res) => {
     }
 }
 
+const findUserBookings = async (req, res) => {
+    try {
+        const { userId } = req.query; // Get userId from the query parameters
+
+        if (!userId) {
+            return res.status(400).json({ message: "userId is required" });
+        }
+
+        const rentals = await Rental.find({ userId: userId }) // Query rentals based on userId
+            .populate("userId")
+            .populate("carId");
+
+        if (!rentals.length) {
+            return res.status(404).json({ message: "No bookings found for this user" });
+        }
+
+        res.status(200).json(rentals);
+    } catch (e) {
+        console.error("Error:", e);
+        res.status(500).json({ message: "Internal Server Error" });
+    }
+};
+
+
 
 const save = async (req, res) => {
     try {
@@ -59,6 +83,7 @@ const update = async (req, res) => {
 module.exports = {
     findAll,
     save,
+    findUserBookings,
     findById,
     deleteById,
     update

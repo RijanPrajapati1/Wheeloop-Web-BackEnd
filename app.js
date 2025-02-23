@@ -5,6 +5,8 @@ const car_route = require("./routes/car_route")
 const rental_route = require("./routes/rental_route")
 const cors = require('cors');
 const cred_route = require("./routes/cred_route")
+const path = require("path");  // <-- Add this line
+
 
 const app = express();
 
@@ -18,7 +20,11 @@ app.use(cors({
 
 app.use(express.json());
 
-app.use("/api/user", user_route);
+
+app.use("/car_images", express.static(path.join(__dirname, "car_images")));
+
+
+// app.use("/api/user", user_route);
 app.use("/api/car", car_route);
 app.use("/api/rental", rental_route);
 app.use("/api/cred", cred_route);
