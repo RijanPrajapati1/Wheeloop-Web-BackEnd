@@ -3,9 +3,11 @@ const connectDb = require("./config/db");
 const user_route = require("./routes/user_route")
 const car_route = require("./routes/car_route")
 const rental_route = require("./routes/rental_route")
+const rating_route = require("./routes/rating_route")
 const cors = require('cors');
 const cred_route = require("./routes/cred_route")
 const path = require("path");  // <-- Add this line
+
 
 
 const app = express();
@@ -23,12 +25,11 @@ app.use(express.json());
 
 app.use("/car_images", express.static(path.join(__dirname, "car_images")));
 
-
-// app.use("/api/user", user_route);
+app.use("/api/user", user_route);
 app.use("/api/car", car_route);
 app.use("/api/rental", rental_route);
 app.use("/api/cred", cred_route);
-// app.use("/api/rating",rating_route);
+app.use("/api/rating", rating_route);
 
 
 const port = 3001;
