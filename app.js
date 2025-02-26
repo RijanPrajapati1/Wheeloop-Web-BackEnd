@@ -28,6 +28,7 @@ app.use("/car_images", express.static(path.join(__dirname, "car_images")));
 app.use("/api/car", car_route);
 app.use("/api/rental", rental_route);
 app.use("/api/cred", cred_route);
+// app.use("/api/rating",rating_route);
 
 
 const port = 3001;

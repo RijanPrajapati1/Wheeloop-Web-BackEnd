@@ -3,7 +3,7 @@ const mongoose = require("mongoose");
 const rentalSchema = new mongoose.Schema({
     userId: {
         type: mongoose.Schema.Types.ObjectId,
-        ref: "users"
+        ref: "Cred"
     },
     carId: {
         type: mongoose.Schema.Types.ObjectId,

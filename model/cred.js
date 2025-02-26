@@ -27,6 +27,7 @@ const credSchema = new mongoose.Schema({
         type: String,
         required: true
     },
+    profilePicture: { type: String },
     createdAt: {
         type: Date,
         default: Date.now

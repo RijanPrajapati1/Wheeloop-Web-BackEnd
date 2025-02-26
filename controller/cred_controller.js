@@ -7,13 +7,9 @@ const SECRET_KEY = "8261ba19898d0dcdfe6c0c411df74b587b2e54538f5f451633b71e39f957
 // Register Controller
 const register = async (req, res) => {
     console.log("Register request received", req.body);
-    const { email, password, role, full_name, address, phone_number } = req.body;
+    const { email, password, full_name, address, phone_number } = req.body;
 
-    const allowedRoles = ["admin", "customer"];
-    if (!allowedRoles.includes(role)) {
-        console.log("Invalid role attempted", role);
-        return res.status(400).send(`Invalid role. Allowed roles: ${allowedRoles.join(", ")}`);
-    }
+    const role = "customer"; // Force role to "customer"
 
     const existingCred = await Cred.findOne({ email });
     if (existingCred) {
@@ -44,14 +40,16 @@ const register = async (req, res) => {
             subject: "Registration Successful",
             html: `<h1>Registration Successful</h1><p>Dear ${cred.full_name}, Your account has been created.</p>`
         });
-        console.log("Email sent successfully to", cred.email);
 
+        console.log("Email sent successfully to", cred.email);
         res.status(201).send({ message: "You have successfully registered.", user: cred, emailInfo: info });
+
     } catch (e) {
         console.error("Error during registration", e);
         res.status(500).json(e);
     }
 };
+
 
 // Verify Email Controller
 const verifyEmail = async (req, res) => {

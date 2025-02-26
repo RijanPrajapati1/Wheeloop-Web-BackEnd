@@ -7,35 +7,131 @@ const findAll = async (req, res) => {
         const rentals = await Rental.find()
             .populate('userId')
             .populate('carId');
+
         res.status(200).json(rentals);
     } catch (e) {
-        res.status(500).json(e)
+        console.error("Error fetching all rentals:", e); // Log the error
+        res.status(500).json({ message: "Internal Server Error", error: e.message });
     }
-}
+};
+
 
 const findUserBookings = async (req, res) => {
     try {
-        const { userId } = req.query; // Get userId from the query parameters
+        const { userId } = req.query;
 
         if (!userId) {
             return res.status(400).json({ message: "userId is required" });
         }
 
-        const rentals = await Rental.find({ userId: userId }) // Query rentals based on userId
-            .populate("userId")
-            .populate("carId");
+        const rentals = await Rental.find({ userId })
+            .populate("userId", "email")
+            .populate("carId", "name image"); // Ensure carId includes name and image
 
         if (!rentals.length) {
-            return res.status(404).json({ message: "No bookings found for this user" });
+            return res.status(404).json({ message: "No bookings found" });
         }
+
+        // Ensure correct image path without duplication
+        rentals.forEach((rental) => {
+            if (rental.carId && rental.carId.image) {
+                // If image URL already contains "http", don't modify it
+                if (!rental.carId.image.startsWith("http")) {
+                    rental.carId.image = `http://localhost:3001/car_images/${rental.carId.image}`;
+                }
+            }
+        });
 
         res.status(200).json(rentals);
     } catch (e) {
-        console.error("Error:", e);
+        console.error("Error fetching user bookings:", e);
         res.status(500).json({ message: "Internal Server Error" });
     }
 };
 
+
+
+const getAdminBookings = async (req, res) => {
+    try {
+        const bookings = await Rental.find()
+            .populate("userId", "email") // Fetch user email
+            .populate("carId", "name image"); // Fetch car details
+
+        res.status(200).json(bookings);
+    } catch (err) {
+        console.error("Error fetching bookings:", err);
+        res.status(500).json({ message: "Internal Server Error" });
+    }
+};
+
+// ✅ Update booking status or details
+const updateBooking = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const updateData = req.body;
+
+        if (!mongoose.Types.ObjectId.isValid(id)) {
+            return res.status(400).json({ message: "Invalid booking ID" });
+        }
+
+        const updatedBooking = await Rental.findByIdAndUpdate(id, updateData, { new: true });
+
+        if (!updatedBooking) {
+            return res.status(404).json({ message: "Booking not found" });
+        }
+
+        res.status(200).json(updatedBooking);
+    } catch (err) {
+        console.error("Error updating booking:", err);
+        res.status(500).json({ message: "Internal Server Error" });
+    }
+};
+
+// ✅ Delete booking
+const deleteBooking = async (req, res) => {
+    try {
+        const { id } = req.params;
+
+        if (!mongoose.Types.ObjectId.isValid(id)) {
+            return res.status(400).json({ message: "Invalid booking ID" });
+        }
+
+        const deletedBooking = await Rental.findByIdAndDelete(id);
+
+        if (!deletedBooking) {
+            return res.status(404).json({ message: "Booking not found" });
+        }
+
+        res.status(200).json({ message: "Booking deleted successfully" });
+    } catch (err) {
+        console.error("Error deleting booking:", err);
+        res.status(500).json({ message: "Internal Server Error" });
+    }
+};
+
+const processPayment = async (req, res) => {
+    try {
+        const { userId, carId, pickUpLocation, startDate, endDate, driverDays, totalAmount, payment } = req.body;
+
+        const newRental = new Rental({
+            userId,
+            carId,
+            pickUpLocation,
+            startDate,
+            endDate,
+            driverDays,
+            totalAmount,
+            status: "pending",
+            payment
+        });
+
+        await newRental.save();
+        res.status(201).json({ message: "Payment successful! Booking confirmed.", booking: newRental });
+    } catch (error) {
+        console.error("Payment processing error:", error);
+        res.status(500).json({ message: "Payment failed!", error: error.message });
+    }
+};
 
 
 const save = async (req, res) => {
@@ -51,14 +147,33 @@ const save = async (req, res) => {
     }
 }
 
+const mongoose = require("mongoose");
+
 const findById = async (req, res) => {
     try {
-        const rentals = await Rental.findById(req.params.id);
-        res.status(200).json(rentals)
+        const { id } = req.params;
+
+        // Use mongoose's built-in function to validate ObjectId
+        if (!mongoose.Types.ObjectId.isValid(id)) {
+            return res.status(400).json({ message: "Invalid rental ID format" });
+        }
+
+        const rental = await Rental.findById(id)
+            .populate("userId")
+            .populate("carId");
+
+        if (!rental) {
+            return res.status(404).json({ message: "Rental not found" });
+        }
+
+        res.status(200).json(rental);
     } catch (e) {
-        res.status(500).json(e)
+        console.error("Error fetching rental by ID:", e);
+        res.status(500).json({ message: "Internal Server Error", error: e.message });
     }
-}
+};
+
+
 
 
 const deleteById = async (req, res) => {
@@ -86,5 +201,9 @@ module.exports = {
     findUserBookings,
     findById,
     deleteById,
-    update
+    update,
+    getAdminBookings,
+    deleteBooking,
+    updateBooking,
+    processPayment
 }
