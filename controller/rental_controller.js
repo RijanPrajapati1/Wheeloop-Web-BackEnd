@@ -1,7 +1,6 @@
 
 const Rental = require("../model/rental")
 
-
 const findAll = async (req, res) => {
     try {
         const rentals = await Rental.find()
@@ -109,30 +108,6 @@ const deleteBooking = async (req, res) => {
     }
 };
 
-const processPayment = async (req, res) => {
-    try {
-        const { userId, carId, pickUpLocation, startDate, endDate, driverDays, totalAmount, payment } = req.body;
-
-        const newRental = new Rental({
-            userId,
-            carId,
-            pickUpLocation,
-            startDate,
-            endDate,
-            driverDays,
-            totalAmount,
-            status: "pending",
-            payment
-        });
-
-        await newRental.save();
-        res.status(201).json({ message: "Payment successful! Booking confirmed.", booking: newRental });
-    } catch (error) {
-        console.error("Payment processing error:", error);
-        res.status(500).json({ message: "Payment failed!", error: error.message });
-    }
-};
-
 
 const save = async (req, res) => {
     try {
@@ -205,5 +180,5 @@ module.exports = {
     getAdminBookings,
     deleteBooking,
     updateBooking,
-    processPayment
+
 }

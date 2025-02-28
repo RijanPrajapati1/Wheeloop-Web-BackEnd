@@ -9,15 +9,9 @@ router.get("/adminBookings", getAdminBookings);
 router.put("/updateBooking/:id", updateBooking);
 router.delete("/deleteBooking/:id", deleteBooking);
 
-router.post("/processPayment", processPayment);
-
 router.post("/", save)
 router.get("/:id", findById)
 router.delete("/:id", deleteById)
 router.put("/:id", update)
-
-
-
-
 
 module.exports = router;
