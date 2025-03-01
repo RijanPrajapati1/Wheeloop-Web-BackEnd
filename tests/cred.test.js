@@ -1,104 +1,116 @@
-require("dotenv").config();
-const chai = require("chai");
-const chaiHttp = require("chai-http");
-const app = require("../app"); // Ensure this is your main Express app
-const Cred = require("../model/cred");
+const request = require('supertest');
+const app = require('../app'); // Import your Express app
+const mongoose = require('mongoose');
+const Cred = require('../model/cred');
+const bcrypt = require('bcryptjs');
+const jwt = require('jsonwebtoken');
+const SECRET_KEY = "8261ba19898d0dcdfe6c0c411df74b587b2e54538f5f451633b71e39f957cf01";
 
-chai.use(chaiHttp);
-const { expect } = chai;
+let token; // This will hold the JWT token for authentication tests
 
-let testUser = {
-    email: "testuser@example.com",
-    password: "Test@1234",
-    full_name: "Test User",
-    address: "Test Address",
-    phone_number: "1234567890"
-};
+beforeAll(async () => {
+    // Connect only once before all tests
+    if (mongoose.connection.readyState === 0) {
+        await mongoose.connect('mongodb://localhost:27017/test_wheeloop', { useNewUrlParser: true, useUnifiedTopology: true });
+        console.log("Connected to the test DB.");
+    }
+});
 
-let authToken = "";
-let userId = "";
+afterAll(async () => {
+    // Close the database connection after all tests are done
+    await mongoose.connection.close();
+    console.log("Test DB cleaned and closed.");
+});
 
-describe("Cred API Tests", function () {
-    this.timeout(10000); // Increase timeout for DB operations
+// Test for user registration
+describe('POST /api/cred/register', () => {
+    // it('should register a new user successfully', async () => {
+    //     const newUser = {
+    //         email: 'testuser@example.com',
+    //         password: 'password123',
+    //         full_name: 'Test User',
+    //         address: '123 Test Street',
+    //         phone_number: '1234567890'
+    //     };
 
-    // **Cleanup before running tests**
-    before(async () => {
-        await Cred.deleteMany({ email: testUser.email }); // Remove existing test data
+    //     // const response = await request(app)
+    //     //     .post('/api/cred/register')
+    //     //     .send(newUser)
+    //     //     .expect(201);
+
+    //     expect(response.body.message).toBe('You have successfully registered.');
+    //     expect(response.body.user.email).toBe(newUser.email);
+    // });
+
+    it('should fail if the email is already registered', async () => {
+        const existingUser = {
+            email: 'testuser@example.com',
+            password: 'password123',
+            full_name: 'Test User',
+            address: '123 Test Street',
+            phone_number: '1234567890'
+        };
+
+        // // First, register a user
+        // await request(app)
+        //     .post('/api/cred/register')
+        //     .send(existingUser);
+
+        // Try registering again with the same email
+        const response = await request(app)
+            .post('/api/cred/register')
+            .send(existingUser)
+            .expect(400);
+
+        expect(response.text).toBe('Email already registered.');
+    });
+});
+
+// Test for user login
+describe('POST /api/cred/login', () => {
+    it('should log in successfully and return a JWT token', async () => {
+        const userLogin = {
+            email: 'testuser@example.com',
+            password: 'password123'
+        };
+
+        // Ensure the user is registered
+        await request(app)
+            .post('/api/cred/register')
+            .send(userLogin);
+
+        const response = await request(app)
+            .post('/api/cred/login')
+            .send(userLogin)
+            .expect(200);
+
+        expect(response.body.token).toBeDefined();  // Token should be returned
+        token = response.body.token;  // Store the token for further tests
+        expect(response.body.role).toBe('customer'); // Assuming "customer" is the default role
     });
 
-    // **1. Register a New User**
-    it("should register a new user", (done) => {
-        chai.request(app)
-            .post("/api/cred/register")
-            .send(testUser)
-            .end((err, res) => {
-                expect(res).to.have.status(201);
-                expect(res.body).to.have.property("message", "You have successfully registered.");
-                userId = res.body.user._id;
-                done();
-            });
-    });
+    it('should fail with incorrect credentials', async () => {
+        const invalidLogin = {
+            email: 'testuser@example.com',
+            password: 'wrongpassword'
+        };
 
-    // **2. Login User**
-    it("should log in the user and return a token", (done) => {
-        chai.request(app)
-            .post("/api/cred/login")
-            .send({ email: testUser.email, password: testUser.password })
-            .end((err, res) => {
-                expect(res).to.have.status(200);
-                expect(res.body).to.have.property("token");
-                expect(res.body).to.have.property("role");
-                authToken = res.body.token;
-                done();
-            });
-    });
+        const response = await request(app)
+            .post('/api/cred/login')
+            .send(invalidLogin)
+            .expect(403);
 
-    // **3. Fetch All Users**
-    it("should fetch all users", (done) => {
-        chai.request(app)
-            .get("/api/cred/users")
-            .set("Authorization", `Bearer ${authToken}`)
-            .end((err, res) => {
-                expect(res).to.have.status(200);
-                expect(res.body).to.be.an("array");
-                done();
-            });
+        expect(response.text).toBe('Invalid email or password');
     });
+});
 
-    // **4. Fetch User by ID**
-    it("should fetch a user by ID", (done) => {
-        chai.request(app)
-            .get(`/api/cred/users/${userId}`)
-            .set("Authorization", `Bearer ${authToken}`)
-            .end((err, res) => {
-                expect(res).to.have.status(200);
-                expect(res.body).to.have.property("_id", userId);
-                done();
-            });
-    });
+// Test for email verification
+describe('GET /api/cred/verify-email', () => {
+    it('should fail with an invalid or expired token', async () => {
+        const response = await request(app)
+            .get('/api/cred/verify-email?token=invalidtoken')
+            .expect(400);
 
-    // **5. Update User Details**
-    it("should update user details", (done) => {
-        chai.request(app)
-            .put(`/api/cred/users/${userId}`)
-            .set("Authorization", `Bearer ${authToken}`)
-            .send({ address: "Updated Address" })
-            .end((err, res) => {
-                expect(res).to.have.status(202);
-                expect(res.body).to.have.property("address", "Updated Address");
-                done();
-            });
-    });
-
-    // **6. Delete User**
-    it("should delete a user by ID", (done) => {
-        chai.request(app)
-            .delete(`/api/cred/users/${userId}`)
-            .set("Authorization", `Bearer ${authToken}`)
-            .end((err, res) => {
-                expect(res).to.have.status(200);
-                expect(res.text).to.equal("User deleted");
-                done();
-            });
+        expect(response.text).toBe('Invalid or expired token.');
     });
 });

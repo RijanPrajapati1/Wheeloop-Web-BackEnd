@@ -39,3 +39,7 @@ const port = 3001;
 app.listen(port, () => {
     console.log(`Server running at http://localhost:${port}`)
 })
+
+
+//for testing
+module.exports = app
